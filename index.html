@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Student Record Manager</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="mobileGate" class="mobile-gate" hidden>
+      <div class="mobile-gate-card">
+        <p class="eyebrow">STUDENT RECORD MANAGER</p>
+        <h1>Use a larger screen</h1>
+        <p>
+          This tool is designed for desktop and tablet-sized screens because it
+          works with file directories and side-by-side record previews.
+        </p>
+        <p class="muted">
+          Open Student Record Manager on a larger display to continue.
+        </p>
+      </div>
+    </div>
+
+    <div id="app" class="app-root">
+      <header class="app-header">
+        <div>
+          <h1>Student Record Manager <span>v1.6</span></h1>
+          <p class="lede">
+            Manage student records to move into Obsidian. All accepted entries
+            are written to the vault.
+          </p>
+        </div>
+        <div class="header-actions">
+          <button class="button ghost" id="resetBtn" type="button">
+            Reset session
+          </button>
+          <button
+            class="button icon"
+            id="helpBtn"
+            type="button"
+            aria-label="Open help">
+            ?
+          </button>
+        </div>
+      </header>
+
+      <div class="session-bar" id="sessionBar">
+        <div class="session-summary">
+          <span class="session-label">Session</span>
+          <strong id="sessionLabel">Not configured</strong>
+        </div>
+        <div class="session-summary session-summary-right">
+          <span id="sessionState" class="status-pill">Setup required</span>
+        </div>
+      </div>
+
+      <main class="workspace">
+        <section
+          class="workspace-left"
+          aria-label="Student records and session setup">
+          <details class="panel drawer" id="setupPanel" open>
+            <summary class="drawer-summary">
+              <div>
+                <p class="section-kicker">01 / SESSION</p>
+                <h2>Import setup</h2>
+                <small>These actions are read-only.</small>
+              </div>
+              <div class="drawer-summary-right">
+                <span class="status-pill" id="sessionStatus">Not ready</span>
+                <span class="drawer-chevron" aria-hidden="true">+</span>
+              </div>
+            </summary>
+
+            <div class="drawer-content">
+              <div class="setup-grid">
+                <label class="field wide">
+                  <span>Moodle export</span>
+                  <div class="file-control">
+                    <button class="button secondary" id="xlsxBtn" type="button">
+                      Choose XLSX
+                    </button>
+                    <input
+                      id="xlsxInput"
+                      type="file"
+                      accept=".xlsx,.xls"
+                      hidden />
+                    <span id="xlsxName" class="file-name"
+                      >No file selected</span
+                    >
+                  </div>
+                  <small>Use raw Excel exports from Moodle.</small>
+                </label>
+
+                <label class="field">
+                  <span>Course</span>
+                  <input
+                    id="courseInput"
+                    type="text"
+                    value="DDES1150"
+                    placeholder="e.g. DDES1150"
+                    autocomplete="off" />
+                </label>
+
+                <label class="field">
+                  <span>Year</span>
+                  <input
+                    id="yearInput"
+                    type="number"
+                    value="2026"
+                    min="2000"
+                    max="2200" />
+                </label>
+
+                <label class="field">
+                  <span>Term</span>
+                  <input
+                    id="termInput"
+                    type="text"
+                    value="T3"
+                    placeholder="e.g. T3"
+                    autocomplete="off" />
+                </label>
+
+                <label class="field">
+                  <span>Student level</span>
+                  <select id="levelInput">
+                    <option value="UG" selected>UG</option>
+                    <option value="PG">PG</option>
+                  </select>
+                  <small>For new student records.</small>
+                </label>
+
+                <label class="field wide">
+                  <span>Obsidian student records</span>
+                  <div class="file-control">
+                    <button
+                      class="button secondary"
+                      id="studentDirBtn"
+                      type="button">
+                      Choose folder
+                    </button>
+                    <span id="studentDirName" class="file-name"
+                      >No folder selected</span
+                    >
+                  </div>
+                  <small
+                    >Select the directory containing student
+                    <code>.md</code> files.</small
+                  >
+                </label>
+
+                <label class="field wide">
+                  <span>Obsidian tutor records</span>
+                  <div class="file-control">
+                    <button
+                      class="button secondary"
+                      id="tutorDirBtn"
+                      type="button">
+                      Choose folder
+                    </button>
+                    <span id="tutorDirName" class="file-name"
+                      >No folder selected</span
+                    >
+                  </div>
+                  <small
+                    >Select the directory containing tutor
+                    <code>.md</code> files.</small
+                  >
+                </label>
+              </div>
+
+              <div class="action-row">
+                <button
+                  class="button primary"
+                  id="scanBtn"
+                  type="button"
+                  disabled>
+                  Scan Moodle records
+                </button>
+              </div>
+
+              <div id="compatNotice" class="notice hidden"></div>
+              <div id="setupMessage" class="inline-message"></div>
+            </div>
+          </details>
+
+          <details class="panel drawer hidden" id="mappingPanel">
+            <summary class="drawer-summary">
+              <div>
+                <p class="section-kicker">02 / TUTOR MAPPING</p>
+                <h2>Assign tutors to Moodle groups</h2>
+              </div>
+              <div class="drawer-summary-right">
+                <span class="status-pill" id="mappingStatus">0 groups</span>
+                <span class="drawer-chevron" aria-hidden="true">+</span>
+              </div>
+            </summary>
+            <div class="drawer-content">
+              <p class="panel-intro">
+                Each Moodle group is mapped once for this import session. Be
+                mindful of Access groups, they may have overlaps. Better to
+                redact Access from Moodle export first.
+              </p>
+              <div id="mappingTable" class="mapping-table"></div>
+              <div class="action-row">
+                <button class="button primary" id="prepareBtn" type="button">
+                  Build review queue
+                </button>
+              </div>
+            </div>
+          </details>
+
+          <section
+            class="panel review-panel hidden"
+            id="resultsPanel"
+            aria-label="Review proposed changes">
+            <div class="review-controls">
+              <div class="review-header">
+                <div>
+                  <p class="section-kicker">03 / REVIEW</p>
+                  <h2>Review proposed changes</h2>
+                </div>
+                <span class="status-pill" id="resultStatus">0 total</span>
+              </div>
+              <div class="stats" id="stats"></div>
+              <div class="toolbar">
+                <div class="filters" role="tablist" aria-label="Record filters">
+                  <button class="filter active" data-filter="all" type="button">
+                    All
+                  </button>
+                  <button class="filter" data-filter="new" type="button">
+                    New
+                  </button>
+                  <button class="filter" data-filter="change" type="button">
+                    New course
+                  </button>
+                  <button class="filter" data-filter="recorded" type="button">
+                    Already recorded
+                  </button>
+                  <button class="filter" data-filter="review" type="button">
+                    Review
+                  </button>
+                  <button class="filter" data-filter="applied" type="button">
+                    Applied
+                  </button>
+                </div>
+                <input
+                  class="search"
+                  id="searchInput"
+                  type="search"
+                  placeholder="Search student ID or name"
+                  autocomplete="off" />
+              </div>
+            </div>
+            <div class="drawer-content drawer-content-results">
+              <div id="recordList" class="record-list"></div>
+            </div>
+          </section>
+        </section>
+
+        <aside
+          class="workspace-right"
+          id="previewPanel"
+          aria-label="Student preview"
+          aria-live="polite">
+          <div class="preview-empty" id="previewEmpty">
+            <p class="section-kicker">PREVIEW</p>
+            <h2>Select a student</h2>
+            <p>
+              Choose a record from the review list to inspect the current note,
+              proposed change, and apply controls.
+            </p>
+          </div>
+
+          <div class="preview-content hidden" id="previewContent">
+            <div class="preview-header">
+              <div>
+                <p class="section-kicker">PROPOSED CHANGE</p>
+                <h2 id="previewTitle">Student</h2>
+                <p id="previewSubtitle" class="muted"></p>
+              </div>
+            </div>
+            <div id="previewMeta" class="preview-meta"></div>
+            <div id="previewWarning" class="notice hidden"></div>
+            <div class="diff-grid">
+              <section>
+                <div class="diff-label">CURRENT</div>
+                <pre id="currentPreview" class="code-preview"></pre>
+              </section>
+              <section>
+                <div class="diff-label">PROPOSED</div>
+                <pre id="proposedPreview" class="code-preview"></pre>
+              </section>
+            </div>
+            <div id="changeSummary" class="change-summary"></div>
+            <div class="preview-footer">
+              <button class="button danger" id="rejectBtn" type="button">
+                Reject
+              </button>
+              <button class="button primary" id="applyBtn" type="button">
+                Apply this change
+              </button>
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <dialog id="helpDialog" class="dialog help-dialog">
+      <div class="dialog-header">
+        <div>
+          <p class="section-kicker">HELP</p>
+          <h2>How this v1 works</h2>
+        </div>
+        <button
+          class="button icon danger"
+          id="closeHelpBtn"
+          type="button"
+          aria-label="Close help">
+          ×
+        </button>
+      </div>
+      <div class="help-content">
+        <p>
+          This tool reads a raw Moodle XLSX export, matches students by their
+          Moodle Username / Obsidian ID, maps Moodle groups to tutors, and
+          proposes changes to your existing student Markdown files.
+        </p>
+        <p>
+          <strong>Scanning is read-only.</strong> Nothing is written when you
+          scan or preview. Existing notes are never replaced wholesale.
+        </p>
+        <p>
+          For an existing student, the current v1 inserts the new course block
+          immediately before <code>## General Feedback</code> and adds the
+          course session tag using the existing <code>tags:</code> property
+          format.
+        </p>
+        <p>
+          For a genuinely new student, v1 creates a complete record using the
+          structure represented by your existing student notes. Every creation
+          or modification requires an individual Apply action.
+        </p>
+        <p>
+          The Student level selector controls <code>level: UG</code> or
+          <code>level: PG</code> only for newly created student records.
+          Existing student frontmatter is preserved.
+        </p>
+        <p>
+          This is a browser application. It processes the selected files
+          locally. Your Moodle data and Markdown contents are not sent to this
+          site.
+        </p>
+        <p class="muted">
+          For v1, use a Chromium-based browser such as Chrome or Edge for the
+          local folder read/write features.
+        </p>
+      </div>
+    </dialog>
+
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
